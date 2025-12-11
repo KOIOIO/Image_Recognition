@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图像识别大课设</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background-color: #f8f9fa;
+        }
+        .hero-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 60px 0;
+            margin-bottom: 40px;
+        }
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+            height: 100%;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .card-body {
+            display: flex;
+            flex-direction: column;
+        }
+        .card-footer {
+            margin-top: auto;
+        }
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            color: #667eea;
+        }
+        .section-title {
+            margin-bottom: 30px;
+            color: #343a40;
+            font-weight: 600;
+        }
+        .status-badge {
+            font-size: 0.8rem;
+            padding: 5px 10px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">图像识别大课设</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item active">
+                        <a class="nav-link" href="/">首页</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/prepare_data">数据准备</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/config">模型配置</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/train">模型训练</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/results">训练结果</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/predict">图像预测</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/compare">模型对比</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <section class="hero-section">
+        <div class="container text-center">
+            <h1>深度学习图像识别系统</h1>
+            <p class="lead mt-3">基于卷积神经网络的图像分类与识别</p>
+            <p class="mt-2">支持模型配置、训练、评估和图像预测</p>
+        </div>
+    </section>
+
+    <div class="container">
+        <!-- 系统状态 -->
+        <div class="row mb-5">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-body">
+                        <h2 class="section-title">系统状态</h2>
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span>数据集状态:</span>
+                                    <span id="data-status" class="badge bg-warning status-badge">未准备</span>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span>模型配置:</span>
+                                    <span id="config-status" class="badge bg-warning status-badge">未配置</span>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span>模型训练:</span>
+                                    <span id="train-status" class="badge bg-warning status-badge">未训练</span>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span>GPU可用:</span>
+                                    <span id="gpu-status" class="badge bg-danger status-badge">不可用</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 最新模型展示 -->
+            <div class="row mb-4">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <h3 class="section-title">最新已保存模型</h3>
+                            <p id="latest-model">加载中...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 功能卡片 -->
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <div class="feature-icon">📊</div>
+                        <h3 class="card-title">数据准备</h3>
+                        <p class="card-text">准备图像数据集，包括数据预处理、划分和增强等操作。</p>
+                    </div>
+                    <div class="card-footer">
+                        <a href="/prepare_data" class="btn btn-primary w-100">开始准备</a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <div class="feature-icon">⚙️</div>
+                        <h3 class="card-title">模型配置</h3>
+                        <p class="card-text">选择和配置卷积神经网络模型，调整关键参数如学习率、批次大小等。</p>
+                    </div>
+                    <div class="card-footer">
+                        <a href="/config" class="btn btn-primary w-100">配置模型</a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <div class="feature-icon">🤖</div>
+                        <h3 class="card-title">模型训练</h3>
+                        <p class="card-text">训练深度学习模型，实时监控训练进度和性能指标。</p>
+                    </div>
+                    <div class="card-footer">
+                        <a href="/train" class="btn btn-primary w-100">开始训练</a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <div class="feature-icon">📈</div>
+                        <h3 class="card-title">结果分析</h3>
+                        <p class="card-text">查看训练结果，包括损失曲线、准确率曲线和模型评估指标。</p>
+                    </div>
+                    <div class="card-footer">
+                        <a href="/results" class="btn btn-primary w-100">查看结果</a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <div class="feature-icon">🔍</div>
+                        <h3 class="card-title">图像预测</h3>
+                        <p class="card-text">上传图像并使用训练好的模型进行分类预测，查看预测结果和置信度。</p>
+                    </div>
+                    <div class="card-footer">
+                        <a href="/predict" class="btn btn-primary w-100">开始预测</a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <div class="feature-icon">⚖️</div>
+                        <h3 class="card-title">模型对比</h3>
+                        <p class="card-text">比较已保存模型在测试集上的性能，支持批量对比和可视化展示。</p>
+                    </div>
+                    <div class="card-footer">
+                        <a href="/compare" class="btn btn-primary w-100">对比模型</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 项目说明 -->
+        <div class="row mt-8">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-body">
+                        <h2 class="section-title">项目说明</h2>
+                        <p>本项目是一个基于深度学习的图像识别系统，支持多种卷积神经网络模型的训练和评估。系统具有以下特点：</p>
+                        <ul>
+                            <li>提供三种不同复杂度的CNN模型架构（简单、改进、高级）</li>
+                            <li>支持自定义模型参数配置（学习率、批次大小、优化器等）</li>
+                            <li>实时监控训练过程和性能指标</li>
+                            <li>可视化训练结果和评估指标</li>
+                            <li>支持图像上传和预测功能</li>
+                            <li>提供示例数据集自动准备功能</li>
+                        </ul>
+                        <p>使用流程：</p>
+                        <ol>
+                            <li>首先在<strong>数据准备</strong>页面准备数据集</li>
+                            <li>然后在<strong>模型配置</strong>页面设置模型参数</li>
+                            <li>接着在<strong>模型训练</strong>页面开始训练</li>
+                            <li>训练完成后，可以在<strong>结果分析</strong>页面查看详细结果</li>
+                            <li>最后在<strong>图像预测</strong>页面上传图像进行预测</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="mt-10 py-5 bg-dark text-white">
+        <div class="container text-center">
+            <p>&copy; 2023 图像识别大课设 - 深度学习项目</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 检查系统状态并加载最新模型
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始加载时获取系统状态
+            updateSystemStatus();
+            // 每5秒更新一次系统状态
+            setInterval(updateSystemStatus, 5000);
+            // 同时加载最新已保存模型信息
+            loadLatestModel();
+        });
+
+        // 更新系统状态函数
+        function updateSystemStatus() {
+            fetch('/api/get_system_status')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        console.error('获取系统状态时出错:', data.error);
+                        return;
+                    }
+
+                    // 更新数据集状态
+                    const dataStatus = document.getElementById('data-status');
+                    dataStatus.className = `badge ${data.data_class} status-badge`;
+                    dataStatus.textContent = data.data_status;
+
+                    // 更新模型配置状态
+                    const configStatus = document.getElementById('config-status');
+                    configStatus.className = `badge ${data.config_class} status-badge`;
+                    configStatus.textContent = data.config_status;
+
+                    // 更新模型训练状态
+                    const trainStatus = document.getElementById('train-status');
+                    trainStatus.className = `badge ${data.train_class} status-badge`;
+                    trainStatus.textContent = data.train_status;
+
+                    // 更新GPU状态
+                    const gpuStatus = document.getElementById('gpu-status');
+                    gpuStatus.className = `badge ${data.gpu_class} status-badge`;
+                    gpuStatus.textContent = data.gpu_status;
+                })
+                .catch(error => console.error('获取系统状态时出错:', error));
+        }
+
+        // 加载最新保存的模型并在主页显示
+        function loadLatestModel() {
+            fetch('/api/list_models')
+                .then(r => r.json())
+                .then(data => {
+                    const el = document.getElementById('latest-model');
+                    if (!el) return;
+                    if (data && data.status === 'success' && Array.isArray(data.models) && data.models.length>0) {
+                        // 显示 latest.json 指向的模型或第一个模型
+                        const latest = (data.meta && data.meta.latest && data.meta.latest.latest) ? data.meta.latest.latest : null;
+                        let chosen = null;
+                        if (latest) chosen = data.models.find(m=> (m.filename===latest || m.id===latest));
+                        if (!chosen) {
+                            // 作为回退，选择 modified 字段最近的模型（如果有 modified）
+                            const withMod = data.models.filter(m => m.modified && m.modified.length>0);
+                            if (withMod.length > 0) {
+                                withMod.sort((a,b) => {
+                                    // 使用字符串比较，因为格式为 YYYY-MM-DD HH:MM:SS，可按字典序比较
+                                    return b.modified.localeCompare(a.modified);
+                                });
+                                chosen = withMod[0];
+                            } else {
+                                chosen = data.models[0];
+                            }
+                        }
+                        const name = chosen.display || chosen.filename || chosen.id || '未知模型';
+                        el.textContent = name + (chosen.modified ? ('，保存时间: '+chosen.modified) : '');
+                    } else {
+                        el.textContent = '未检测到已保存的模型';
+                    }
+                })
+                .catch(err=>{
+                    const el = document.getElementById('latest-model');
+                    if (el) el.textContent = '加载最新模型失败';
+                    console.error('loadLatestModel error', err);
+                });
+        }
+    </script>
+</body>
+</html>

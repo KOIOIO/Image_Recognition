@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>模型训练 - 图像识别大课设</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background-color: #f8f9fa;
+        }
+        .section-title {
+            margin-bottom: 30px;
+            color: #343a40;
+            font-weight: 600;
+        }
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .btn-primary {
+            background-color: #667eea;
+            border-color: #667eea;
+        }
+        .btn-primary:hover {
+            background-color: #5a67d8;
+            border-color: #5a67d8;
+        }
+        .btn-secondary {
+            background-color: #48bb78;
+            border-color: #48bb78;
+        }
+        .btn-secondary:hover {
+            background-color: #38a169;
+            border-color: #38a169;
+        }
+        .param-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .param-label {
+            font-weight: 500;
+            color: #495057;
+        }
+        .param-value {
+            font-weight: 600;
+            color: #667eea;
+        }
+        .training-info {
+            margin-top: 30px;
+        }
+        .training-status {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        .status-pending {
+            color: #ffc107;
+        }
+        .status-training {
+            color: #17a2b8;
+        }
+        .status-completed {
+            color: #28a745;
+        }
+        .status-error {
+            color: #dc3545;
+        }
+        .progress-container {
+            margin: 20px 0;
+        }
+        .logs-container {
+            background-color: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 5px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+        .log-line {
+            margin-bottom: 5px;
+        }
+        .log-info {
+            color: #63b3ed;
+        }
+        .log-success {
+            color: #68d391;
+        }
+        .log-warning {
+            color: #fbbf24;
+        }
+        .log-error {
+            color: #fc8181;
+        }
+        .training-stats {
+            margin-top: 20px;
+        }
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #667eea;
+        }
+        .stat-label {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">图像识别大课设</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">首页</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/prepare_data">数据准备</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/config">模型配置</a>
+                    </li>
+                    <li class="nav-item active">
+                        <a class="nav-link" href="/train">模型训练</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/results">训练结果</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/predict">图像预测</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <h1 class="section-title">模型训练</h1>
+        
+        <!-- 训练参数概览 -->
+        <div class="card">
+            <div class="card-body">
+                <h3>训练参数</h3>
+                <div class="mt-3" id="params-container">
+                    <div class="param-item">
+                        <span class="param-label">模型类型：</span>
+                        <span class="param-value" id="model-type">-</span>
+                    </div>
+                    <div class="param-item">
+                        <span class="param-label">批次大小：</span>
+                        <span class="param-value" id="batch-size">-</span>
+                    </div>
+                    <div class="param-item">
+                        <span class="param-label">学习率：</span>
+                        <span class="param-value" id="learning-rate">-</span>
+                    </div>
+                    <div class="param-item">
+                        <span class="param-label">训练轮数：</span>
+                        <span class="param-value" id="epochs">-</span>
+                    </div>
+                    <div class="param-item">
+                        <span class="param-label">优化器：</span>
+                        <span class="param-value" id="optimizer-type">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 训练控制 -->
+        <div class="card">
+            <div class="card-body">
+                <h3>开始训练</h3>
+                <p>点击下方按钮开始训练模型。训练过程中，您可以实时查看训练日志和进度。</p>
+                <p><strong>注意：</strong> 训练时间取决于模型复杂度、数据集大小和硬件性能。简单模型通常需要几分钟，而复杂模型可能需要更长时间。</p>
+                
+                <form action="/train" method="post" id="training-form">
+                    <button type="submit" class="btn btn-primary btn-lg" id="start-training-btn">
+                        🚀 开始训练
+                    </button>
+                    <button type="button" class="btn btn-secondary btn-lg ml-3" id="view-results-btn" style="display: none;">
+                        📊 查看结果
+                    </button>
+                    <button type="button" class="btn btn-primary btn-lg ml-3" id="retrain-btn" style="display: none;">
+                        🔄 重新训练
+                    </button>
+                    <button type="button" class="btn btn-danger btn-lg ml-3" id="stop-training-btn" style="display: none;">
+                    ⏹️ 停止训练
+                </button>
+                
+                <!-- 停止训练后的选项按钮组 -->
+                <div id="stop-options" class="btn-group mt-2" style="display: none;">
+                    <button id="resume-training-btn" class="btn btn-primary">继续训练</button>
+                    <button id="back-to-config-btn" class="btn btn-secondary">返回配置</button>
+                    <button id="terminate-training-btn" class="btn btn-danger">终止训练</button>
+                </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- 训练状态 -->
+        <div class="card training-info">
+            <div class="card-body">
+                <h3>训练状态</h3>
+                
+                <div class="training-status status-pending" id="training-status">
+                    ⏳ 等待开始训练...
+                </div>
+                
+                <!-- 进度条 -->
+                <div class="progress-container">
+                    <div class="progress">
+                        <div id="progress-bar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                    </div>
+                </div>
+                
+                <!-- 当前轮次信息 -->
+                <div class="training-stats">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="stat-item">
+                                <div class="stat-value" id="current-epoch">0</div>
+                                <div class="stat-label">当前轮次</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-item">
+                                <div class="stat-value" id="train-loss">0.0000</div>
+                                <div class="stat-label">训练损失</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-item">
+                                <div class="stat-value" id="train-acc">0.00%</div>
+                                <div class="stat-label">训练准确率</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-item">
+                                <div class="stat-value" id="test-acc">0.00%</div>
+                                <div class="stat-label">测试准确率</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 训练日志 -->
+                <div class="mt-4">
+                    <h4>训练日志</h4>
+                    <div class="logs-container" id="training-logs">
+                        <div class="log-line"><span class="log-info">[信息]</span> 准备开始训练...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 训练提示 -->
+        <div class="card">
+            <div class="card-body">
+                <h3>训练提示</h3>
+                <ul>
+                    <li>训练过程中请不要关闭浏览器窗口，否则训练将中断</li>
+                    <li>您可以通过观察损失值和准确率的变化来判断训练效果</li>
+                    <li>如果损失值持续下降但准确率不再提高，可能出现了过拟合</li>
+                    <li>如果损失值波动很大，可能是学习率设置过大</li>
+                    <li>训练完成后，您可以在结果页面查看详细的训练报告</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <footer class="mt-10 py-5 bg-dark text-white">
+        <div class="container text-center">
+            <p>&copy; 2023 图像识别大课设 - 深度学习项目</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 获取DOM元素
+            const trainingForm = document.getElementById('training-form');
+            const startTrainingBtn = document.getElementById('start-training-btn');
+            const viewResultsBtn = document.getElementById('view-results-btn');
+            const retrainBtn = document.getElementById('retrain-btn');
+            const stopTrainingBtn = document.getElementById('stop-training-btn');
+            const trainingStatus = document.getElementById('training-status');
+            const progressBar = document.getElementById('progress-bar');
+            const trainingLogs = document.getElementById('training-logs');
+            const currentEpoch = document.getElementById('current-epoch');
+            const trainLoss = document.getElementById('train-loss');
+            const trainAcc = document.getElementById('train-acc');
+            const testAcc = document.getElementById('test-acc');
+            const stopOptions = document.getElementById('stop-options');
+            const resumeTrainingBtn = document.getElementById('resume-training-btn');
+            const backToConfigBtn = document.getElementById('back-to-config-btn');
+            const terminateTrainingBtn = document.getElementById('terminate-training-btn');
+            
+            // 参数元素
+            const modelTypeElement = document.getElementById('model-type');
+            const batchSizeElement = document.getElementById('batch-size');
+            const learningRateElement = document.getElementById('learning-rate');
+            const epochsElement = document.getElementById('epochs');
+            const optimizerTypeElement = document.getElementById('optimizer-type');
+            
+            // 默认训练参数
+    let trainingParams = {
+        model_type: 'simple',
+        batch_size: 64,
+        learning_rate: 0.001,
+        epochs: 500,
+        optimizer_type: 'adam'
+    };
+            
+            // 从后端API获取实际模型参数
+            function loadModelParams() {
+                // 首先尝试从URL参数获取配置（兼容现有逻辑）
+                const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.get('model_type')) {
+                    const modelType = urlParams.get('model_type');
+                    const batchSize = urlParams.get('batch_size');
+                    const learningRate = urlParams.get('learning_rate');
+                    const epochs = urlParams.get('epochs');
+                    const optimizerType = urlParams.get('optimizer_type');
+                    
+                    // 更新训练参数
+                    if (modelType) trainingParams.model_type = modelType;
+                    if (batchSize) trainingParams.batch_size = parseInt(batchSize);
+                    if (learningRate) trainingParams.learning_rate = parseFloat(learningRate);
+                    if (epochs) trainingParams.epochs = parseInt(epochs);
+                    if (optimizerType) trainingParams.optimizer_type = optimizerType;
+                }
+                
+                // 然后尝试从model_params.json加载最新参数
+                fetch('static/model_params.json')
+                    .then(response => {
+                        if (response.ok) {
+                            return response.json();
+                        }
+                        throw new Error('参数文件不存在或无法访问');
+                    })
+                    .then(data => {
+                        // 更新训练参数为从文件加载的参数
+                        if (data) {
+                            trainingParams = {
+                                model_type: data.model_type || 'simple',
+                                batch_size: data.batch_size || 64,
+                                learning_rate: data.learning_rate || 0.001,
+                                epochs: data.epochs || 10,
+                                optimizer_type: data.optimizer_type || 'adam'
+                            };
+                        }
+                        // 显示参数
+                        updateParamDisplay();
+                    })
+                    .catch(error => {
+                        console.log('无法加载参数文件，使用默认值或URL参数:', error);
+                        // 显示参数（使用默认值或URL参数）
+                        updateParamDisplay();
+                    });
+            }
+            
+            // 更新参数显示
+            function updateParamDisplay() {
+                // 显示模型类型
+                let modelTypeName = '简单CNN';
+                if (trainingParams.model_type === 'improved') {
+                    modelTypeName = '改进CNN';
+                } else if (trainingParams.model_type === 'advanced') {
+                    modelTypeName = '高级CNN';
+                }
+                modelTypeElement.textContent = modelTypeName;
+                
+                // 显示其他参数
+                batchSizeElement.textContent = trainingParams.batch_size;
+                learningRateElement.textContent = trainingParams.learning_rate;
+                epochsElement.textContent = trainingParams.epochs;
+                optimizerTypeElement.textContent = trainingParams.optimizer_type === 'adam' ? 'Adam' : 'SGD';
+            }
+            
+            // 初始加载参数
+            loadModelParams();
+            
+            // 添加日志的函数
+            function addLog(type, message) {
+                const logLine = document.createElement('div');
+                logLine.className = 'log-line';
+                
+                let logClass = 'log-info';
+                let logTypeName = '信息';
+                
+                switch(type) {
+                    case 'success':
+                        logClass = 'log-success';
+                        logTypeName = '成功';
+                        break;
+                    case 'warning':
+                        logClass = 'log-warning';
+                        logTypeName = '警告';
+                        break;
+                    case 'error':
+                        logClass = 'log-error';
+                        logTypeName = '错误';
+                        break;
+                }
+                
+                logLine.innerHTML = `<span class="${logClass}">[${logTypeName}]</span> ${message}`;
+                trainingLogs.appendChild(logLine);
+                
+                // 滚动到底部
+                trainingLogs.scrollTop = trainingLogs.scrollHeight;
+            }
+            
+            // 训练状态轮询
+            let pollingInterval = null;
+            
+            // 立即开始检查训练状态
+            checkTrainingStatus();
+            
+            // 定时检查训练状态
+            pollingInterval = setInterval(checkTrainingStatus, 2000);
+            
+            function checkTrainingStatus() {
+                fetch('/api/training_status')
+                    .then(response => response.json())
+                    .then(data => {
+                        updateUIWithTrainingStatus(data);
+                    })
+                    .catch(error => {
+                        console.error('获取训练状态失败:', error);
+                    });
+            }
+            
+            function updateUIWithTrainingStatus(data) {
+                const { training_in_progress, status, logs } = data;
+                
+                // 如果训练已经开始，确保使用与后端一致的参数
+                if (training_in_progress && status.total_epochs > 0) {
+                    // 更新epochs显示以匹配后端实际使用的轮数
+                    if (status.total_epochs !== trainingParams.epochs) {
+                        trainingParams.epochs = status.total_epochs;
+                        updateParamDisplay();
+                    }
+                }
+                
+                // 更新训练状态文本和样式
+                if (status.status === 'training') {
+                    trainingStatus.textContent = status.message;
+                    trainingStatus.className = 'training-status status-training';
+                    startTrainingBtn.disabled = true;
+                    stopTrainingBtn.style.display = 'inline-block';
+                    retrainBtn.style.display = 'none';
+                } else if (status.status === 'completed') {
+                    trainingStatus.textContent = status.message;
+                    trainingStatus.className = 'training-status status-completed';
+                    startTrainingBtn.style.display = 'none';
+                    stopTrainingBtn.style.display = 'none';
+                    viewResultsBtn.style.display = 'inline-block';
+                    retrainBtn.style.display = 'inline-block';
+                    
+                    // 清除轮询
+                    if (pollingInterval) {
+                        clearInterval(pollingInterval);
+                        pollingInterval = null;
+                    }
+                } else if (status.status === 'stopped') {
+                    trainingStatus.textContent = status.message;
+                    trainingStatus.className = 'training-status status-stopped';
+                    startTrainingBtn.style.display = 'none';
+                    stopTrainingBtn.style.display = 'none';
+                    retrainBtn.style.display = 'none';
+                    viewResultsBtn.style.display = 'none';
+                    stopOptions.style.display = 'block';
+                } else if (status.status === 'error') {
+                    trainingStatus.textContent = status.message;
+                    trainingStatus.className = 'training-status status-error';
+                    startTrainingBtn.disabled = false;
+                    stopTrainingBtn.style.display = 'none';
+                    stopOptions.style.display = 'none';
+                } else if (!training_in_progress) {
+                    trainingStatus.textContent = '⏳ 等待开始训练...';
+                    trainingStatus.className = 'training-status status-pending';
+                    startTrainingBtn.disabled = false;
+                    stopTrainingBtn.style.display = 'none';
+                }
+                
+                // 更新进度条
+                if (status.total_epochs > 0) {
+                    // 计算总体进度百分比
+                    const totalProgress = Math.min(100, Math.round((status.current_epoch / status.total_epochs) * 100));
+                    
+                    progressBar.style.width = totalProgress + '%';
+                    progressBar.setAttribute('aria-valuenow', totalProgress);
+                    progressBar.textContent = totalProgress.toFixed(0) + '%';
+                    
+                    // 更新当前轮次信息
+                    currentEpoch.textContent = status.current_epoch;
+                    
+                    // 更新损失值和准确率
+                    if (status.train_loss !== undefined) {
+                        trainLoss.textContent = status.train_loss.toFixed(4);
+                    }
+                    if (status.train_accuracy !== undefined) {
+                        trainAcc.textContent = status.train_accuracy.toFixed(2) + '%';
+                    }
+                    if (status.test_accuracy !== undefined) {
+                        testAcc.textContent = status.test_accuracy.toFixed(2) + '%';
+                    }
+                }
+                
+                // 更新日志
+                if (logs && logs.length > 0) {
+                    // 存储当前已有的日志内容，用于去重
+                    const existingLogs = new Set();
+                    Array.from(trainingLogs.children).forEach(child => {
+                        existingLogs.add(child.textContent);
+                    });
+                    
+                    // 只添加新的日志，避免重复
+                    logs.forEach(log => {
+                        // 创建日志消息文本
+                        const logMessage = log;
+                        // 检查是否已经存在相同内容的日志
+                        const logExists = Array.from(trainingLogs.children).some(child => 
+                            child.textContent.includes(logMessage)
+                        );
+                        if (!logExists) {
+                            // 由于服务器返回的是字符串日志，我们将其作为普通信息日志添加
+                            addLog('info', logMessage);
+                        }
+                    });
+                }
+            }
+            
+            // 表单提交事件
+            trainingForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // 禁用开始按钮
+                startTrainingBtn.disabled = true;
+                stopTrainingBtn.style.display = 'inline-block';
+                
+                // 创建隐藏字段来传递参数
+                const paramsInput = document.createElement('input');
+                paramsInput.type = 'hidden';
+                paramsInput.name = 'training_params';
+                paramsInput.value = JSON.stringify(trainingParams);
+                trainingForm.appendChild(paramsInput);
+                
+                // 提交表单
+                trainingForm.submit();
+            });
+            
+            // 查看结果按钮点击事件
+            viewResultsBtn.addEventListener('click', function() {
+                window.location.href = '/results';
+            });
+            
+            // 重新训练按钮点击事件
+            retrainBtn.addEventListener('click', function() {
+                // 重置训练状态
+                trainingStatus.textContent = '⏳ 准备重新训练...';
+                trainingStatus.className = 'training-status status-pending';
+                retrainBtn.style.display = 'none';
+                viewResultsBtn.style.display = 'none';
+                progressBar.style.width = '0%';
+                progressBar.textContent = '0%';
+                currentEpoch.textContent = '0';
+                trainLoss.textContent = '0.0000';
+                trainAcc.textContent = '0.00%';
+                testAcc.textContent = '0.00%';
+                
+                // 添加重新训练日志
+                addLog('info', '准备重新开始训练...');
+                
+                // 模拟表单提交
+                trainingForm.submit();
+            });
+            
+            // 停止训练按钮点击事件
+            stopTrainingBtn.addEventListener('click', function() {
+                if (confirm('确定要停止训练吗？这将中断当前的训练过程，并保存当前模型状态。')) {
+                    // 调用API停止训练
+                    fetch('/api/stop_training', {
+                        method: 'POST'
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        addLog('info', '停止训练请求已发送');
+                    })
+                    .catch(error => {
+                        addLog('error', '停止训练请求失败');
+                    });
+                }
+            });
+            
+            // 继续训练按钮点击事件
+            resumeTrainingBtn.addEventListener('click', function() {
+                if (confirm('确定要继续训练吗？这将从上次停止的位置继续。')) {
+                    // 显示加载状态
+                    this.textContent = '准备中...';
+                    this.disabled = true;
+                    
+                    // 隐藏停止选项，显示训练按钮
+                    stopOptions.style.display = 'none';
+                    stopTrainingBtn.style.display = 'inline-block';
+                    trainingStatus.textContent = '⏳ 准备继续训练...';
+                    trainingStatus.className = 'training-status status-pending';
+                    
+                    // 发送继续训练请求
+                    fetch('/api/resume_training', {
+                        method: 'POST'
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        addLog('info', '继续训练请求已发送');
+                    })
+                    .catch(error => {
+                        addLog('error', '继续训练请求失败');
+                        // 恢复显示停止选项
+                        stopOptions.style.display = 'block';
+                        stopTrainingBtn.style.display = 'none';
+                        this.textContent = '继续训练';
+                        this.disabled = false;
+                    });
+                }
+            });
+            
+            // 返回配置按钮点击事件
+            backToConfigBtn.addEventListener('click', function() {
+                if (confirm('确定要返回配置页面吗？当前未保存的训练状态将被保留，但不会立即应用。')) {
+                    window.location.href = '/config';
+                }
+            });
+            
+            // 终止训练按钮点击事件
+            terminateTrainingBtn.addEventListener('click', function() {
+                if (confirm('确定要终止训练并保存当前模型吗？这将完成训练过程并可立即查看结果。')) {
+                    // 显示加载状态
+                    this.textContent = '保存中...';
+                    this.disabled = true;
+                    
+                    // 标记训练为已终止
+                    fetch('/api/terminate_training', {
+                        method: 'POST'
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        // 跳转到结果页面
+                        window.location.href = '/results';
+                    })
+                    .catch(error => {
+                        addLog('error', '终止训练请求失败');
+                        this.textContent = '终止训练';
+                        this.disabled = false;
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

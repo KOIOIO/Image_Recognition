@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据准备 - 图像识别大课设</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background-color: #f8f9fa;
+        }
+        .section-title {
+            margin-bottom: 30px;
+            color: #343a40;
+            font-weight: 600;
+        }
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .btn-primary {
+            background-color: #667eea;
+            border-color: #667eea;
+        }
+        .btn-primary:hover {
+            background-color: #5a67d8;
+            border-color: #5a67d8;
+        }
+        .progress-container {
+            margin-top: 20px;
+            display: none;
+        }
+        .data-info {
+            margin-top: 30px;
+        }
+        .info-item {
+            margin-bottom: 15px;
+        }
+        .info-label {
+            font-weight: 600;
+            color: #495057;
+        }
+        .sample-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .sample-image {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+        }
+        .sample-item {
+            text-align: center;
+        }
+        .sample-label {
+            font-size: 0.9rem;
+            margin-top: 5px;
+            color: #495057;
+        }
+        .dataset-option {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .dataset-option:hover {
+            background-color: #f8f9fa;
+        }
+        .dataset-option.selected {
+            background-color: #e3f2fd;
+            border-color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">图像识别大课设</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">首页</a>
+                    </li>
+                    <li class="nav-item active">
+                        <a class="nav-link" href="/prepare_data">数据准备</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/config">模型配置</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/train">模型训练</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/results">训练结果</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/predict">图像预测</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <h1 class="section-title">数据准备</h1>
+        
+        <!-- 数据集选择 -->
+        <div class="card">
+            <div class="card-body">
+                <h3>选择数据集</h3>
+                <p>请选择要使用的数据集类型。您可以使用示例数据集或上传自己的数据集。</p>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="border p-4 rounded dataset-option selected" id="sample-dataset">
+                            <h4>📊 示例数据集</h4>
+                            <p>使用内置的CIFAR-10子集作为示例数据，包含10个类别的图像。</p>
+                            <ul>
+                                <li>10个类别：飞机、汽车、鸟类、猫、鹿、狗、青蛙、马、船、卡车</li>
+                                <li>训练集：约400张图像</li>
+                                <li>测试集：约100张图像</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="border p-4 rounded dataset-option" id="custom-dataset">
+                            <h4>📁 自定义数据集</h4>
+                            <p>使用您自己的图像数据集。需要按照特定的目录结构组织数据。</p>
+                            <p><strong>目录结构要求：</strong></p>
+                            <pre>data/
+├── train/
+│   ├── class1/
+│   ├── class2/
+│   └── ...
+└── test/
+    ├── class1/
+    ├── class2/
+    └── ...</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 操作区域 -->
+        <div class="card">
+            <div class="card-body">
+                <h3>准备操作</h3>
+                
+                <div id="sample-actions" class="action-section">
+                    <p>点击下方按钮下载并准备示例数据集。此过程可能需要几分钟时间。</p>
+                    <button id="prepare-sample-btn" class="btn btn-primary">
+                        📥 准备示例数据集
+                    </button>
+                    <hr/>
+                    <p>或直接一键准备 COIL-20 数据集（包含 20 个物体类别）。</p>
+                    <button id="prepare-coil20-btn" class="btn btn-primary">
+                        ⚙️ 一键准备 COIL-20 数据集
+                    </button>
+                </div>
+                
+                <div id="custom-actions" class="action-section" style="display: none;">
+                    <p>请确保您的数据集已按照要求的目录结构放置在 <code>data/</code> 文件夹中。</p>
+                    <button id="verify-custom-btn" class="btn btn-primary">
+                        ✅ 验证数据集
+                    </button>
+                </div>
+                
+                <!-- 进度条 -->
+                <div class="progress-container" id="progress-container">
+                    <div class="progress">
+                        <div id="progress-bar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                    </div>
+                    <p id="progress-message" class="mt-2 text-muted"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 数据集信息 -->
+        <div id="dataset-info" class="card data-info" style="display: none;">
+            <div class="card-body">
+                <h3>📊 数据集信息</h3>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="info-item">
+                            <span class="info-label">数据集类型: </span>
+                            <span id="dataset-type"></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">类别数量: </span>
+                            <span id="num-classes"></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">训练集大小: </span>
+                            <span id="train-size"></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">测试集大小: </span>
+                            <span id="test-size"></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">类别列表: </span>
+                            <div id="class-list"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h4>样本图像</h4>
+                        <div id="sample-images" class="sample-grid">
+                            <!-- 样本图像将通过JavaScript动态加载 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <a href="/config" class="btn btn-primary">
+                    ➡️ 继续配置模型
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <footer class="mt-10 py-5 bg-dark text-white">
+        <div class="container text-center">
+            <p>&copy; 2023 图像识别大课设 - 深度学习项目</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 数据集选项切换
+            const sampleDataset = document.getElementById('sample-dataset');
+            const customDataset = document.getElementById('custom-dataset');
+            const sampleActions = document.getElementById('sample-actions');
+            const customActions = document.getElementById('custom-actions');
+            
+            sampleDataset.addEventListener('click', function() {
+                sampleDataset.classList.add('selected');
+                customDataset.classList.remove('selected');
+                sampleActions.style.display = 'block';
+                customActions.style.display = 'none';
+            });
+            
+            customDataset.addEventListener('click', function() {
+                customDataset.classList.add('selected');
+                sampleDataset.classList.remove('selected');
+                customActions.style.display = 'block';
+                sampleActions.style.display = 'none';
+            });
+            
+            // 准备示例数据集
+            const prepareSampleBtn = document.getElementById('prepare-sample-btn');
+            const prepareCoil20Btn = document.getElementById('prepare-coil20-btn');
+            const progressContainer = document.getElementById('progress-container');
+            const progressBar = document.getElementById('progress-bar');
+            const progressMessage = document.getElementById('progress-message');
+            
+            prepareSampleBtn.addEventListener('click', function() {
+                prepareSampleBtn.disabled = true;
+                progressContainer.style.display = 'block';
+                progressBar.style.width = '0%';
+                progressBar.setAttribute('aria-valuenow', '0');
+                progressBar.textContent = '0%';
+                progressMessage.textContent = '正在准备示例数据集...';
+                
+                // 模拟进度更新
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += 5;
+                    if (progress <= 100) {
+                        progressBar.style.width = progress + '%';
+                        progressBar.setAttribute('aria-valuenow', progress);
+                        progressBar.textContent = progress + '%';
+                        
+                        if (progress < 30) {
+                            progressMessage.textContent = '正在下载数据集...';
+                        } else if (progress < 70) {
+                            progressMessage.textContent = '正在处理数据...';
+                        } else {
+                            progressMessage.textContent = '正在分割数据集...';
+                        }
+                    } else {
+                        clearInterval(interval);
+                    }
+                }, 150);
+                
+                // 调用API准备数据集
+                fetch('/api/prepare_sample_data')
+                    .then(response => response.json())
+                    .then(data => {
+                        clearInterval(interval);
+                        
+                        if (data.status === 'success') {
+                            progressBar.style.width = '100%';
+                            progressBar.setAttribute('aria-valuenow', '100');
+                            progressBar.textContent = '100%';
+                            
+                            if (data.data_already_prepared) {
+                                progressMessage.textContent = '数据集已存在，无需重复下载！';
+                            } else {
+                                progressMessage.textContent = '数据集准备成功！';
+                            }
+                            
+                            // 显示数据集信息
+                            setTimeout(() => {
+                                document.getElementById('dataset-info').style.display = 'block';
+                                document.getElementById('dataset-type').textContent = 'CIFAR-10子集';
+                                document.getElementById('num-classes').textContent = '10';
+                                document.getElementById('train-size').textContent = '约400张图像';
+                                document.getElementById('test-size').textContent = '约100张图像';
+                                
+                                const classes = ['plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck'];
+                                const classList = document.getElementById('class-list');
+                                classList.innerHTML = classes.join(', ');
+                                
+                                // 加载实际样本图像而不是占位符
+                                const sampleImages = document.getElementById('sample-images');
+                                sampleImages.innerHTML = '';
+                                
+                                // 为每个类别定义不同的颜色
+                                const classColors = {
+                                    'plane': '#3498db',  // 蓝色
+                                    'car': '#e74c3c',    // 红色
+                                    'bird': '#2ecc71',   // 绿色
+                                    'cat': '#f39c12',    // 橙色
+                                    'deer': '#9b59b6',   // 紫色
+                                    'dog': '#1abc9c',    // 青绿色
+                                    'frog': '#7f8c8d',   // 灰色
+                                    'horse': '#d35400',  // 棕色
+                                    'ship': '#2980b9',   // 深蓝色
+                                    'truck': '#e67e22'   // 深橙色
+                                };
+                                
+                                // 生成内联SVG图像的函数
+                                function generateSVGPlaceholder(width, height, bgColor, text, textColor = '#ffffff') {
+                                    const fontSize = Math.min(width * 0.3, 24);
+                                    const svgContent = `data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='${width}' height='${height}'%3E%3Crect width='100%25' height='100%25' fill='${bgColor.replace('#', '%23')}'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial, sans-serif' font-size='${fontSize}' fill='${textColor.replace('#', '%23')}' text-anchor='middle' dominant-baseline='middle'%3E${encodeURIComponent(text)}%3C/text%3E%3C/svg%3E`;
+                                    return svgContent;
+                                }
+                                
+                                // 显示所有10个类别的样本图像
+                                classes.forEach(cls => {
+                                    const sampleItem = document.createElement('div');
+                                    sampleItem.className = 'sample-item';
+                                    
+                                    // 使用内联SVG作为占位符图像
+                                    const color = classColors[cls] || '#3498db';
+                                    const img = document.createElement('img');
+                                    img.className = 'sample-image';
+                                    img.alt = cls;
+                                    // 生成内联SVG图像数据URL
+                                    img.src = generateSVGPlaceholder(150, 150, color, cls);
+                                    
+                                    sampleItem.appendChild(img);
+                                    
+                                    const label = document.createElement('div');
+                                    label.className = 'sample-label';
+                                    label.textContent = cls;
+                                    sampleItem.appendChild(label);
+                                    
+                                    sampleImages.appendChild(sampleItem);
+                                });
+                            }, 500);
+                        } else {
+                            progressMessage.textContent = `错误: ${data.message}`;
+                            progressMessage.classList.add('text-danger');
+                            prepareSampleBtn.disabled = false;
+                        }
+                    })
+                    .catch(error => {
+                        clearInterval(interval);
+                        progressMessage.textContent = '准备数据集时出错';
+                        progressMessage.classList.add('text-danger');
+                        prepareSampleBtn.disabled = false;
+                        console.error('准备数据集时出错:', error);
+                    });
+            });
+
+            // 一键准备 COIL-20 数据集
+            prepareCoil20Btn.addEventListener('click', function() {
+                prepareCoil20Btn.disabled = true;
+                progressContainer.style.display = 'block';
+                progressBar.style.width = '0%';
+                progressBar.setAttribute('aria-valuenow', '0');
+                progressBar.textContent = '0%';
+                progressMessage.textContent = '正在准备 COIL-20 数据集...';
+
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += 6;
+                    if (progress <= 100) {
+                        progressBar.style.width = progress + '%';
+                        progressBar.setAttribute('aria-valuenow', progress);
+                        progressBar.textContent = progress + '%';
+                        if (progress < 30) {
+                            progressMessage.textContent = '正在下载或读取压缩包...';
+                        } else if (progress < 70) {
+                            progressMessage.textContent = '正在解压与整理为 ImageFolder...';
+                        } else {
+                            progressMessage.textContent = '正在生成数据统计...';
+                        }
+                    } else {
+                        clearInterval(interval);
+                    }
+                }, 150);
+
+                fetch('/api/prepare_coil20', { method: 'POST' })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'started' && data.job_id) {
+                            const jobId = data.job_id;
+                            const poller = setInterval(() => {
+                                fetch(`/api/prepare_coil20_status?job_id=${jobId}`)
+                                    .then(r => r.json())
+                                    .then(s => {
+                                        // 用后端进度更新进度条
+                                        if (typeof s.progress === 'number') {
+                                            progressBar.style.width = s.progress + '%';
+                                            progressBar.setAttribute('aria-valuenow', s.progress);
+                                            progressBar.textContent = s.progress + '%';
+                                        }
+                                        if (s.message) {
+                                            progressMessage.textContent = s.message;
+                                        }
+                                        if (s.status === 'completed' && s.result) {
+                                            clearInterval(interval);
+                                            clearInterval(poller);
+                                            progressBar.style.width = '100%';
+                                            progressBar.setAttribute('aria-valuenow', '100');
+                                            progressBar.textContent = '100%';
+                                            progressMessage.textContent = s.message || 'COIL-20 数据集准备完成！';
+
+                                            // 显示数据集信息
+                                            setTimeout(() => {
+                                                document.getElementById('dataset-info').style.display = 'block';
+                                                document.getElementById('dataset-type').textContent = 'COIL-20';
+                                                document.getElementById('num-classes').textContent = (s.result.classes || []).length;
+                                                document.getElementById('train-size').textContent = s.result.train_size || '-';
+                                                document.getElementById('test-size').textContent = s.result.test_size || '-';
+
+                                                const classList = document.getElementById('class-list');
+                                                classList.innerHTML = (s.result.classes || []).join(', ');
+
+                                                const sampleImages = document.getElementById('sample-images');
+                                                sampleImages.innerHTML = '';
+                                                (s.result.classes || []).slice(0, 10).forEach(cls => {
+                                                    const sampleItem = document.createElement('div');
+                                                    sampleItem.className = 'sample-item';
+                                                    const img = document.createElement('img');
+                                                    img.className = 'sample-image';
+                                                    img.alt = cls;
+                                                    img.src = `data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Crect width='100%25' height='100%25' fill='%23667eea'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial, sans-serif' font-size='20' fill='%23ffffff' text-anchor='middle' dominant-baseline='middle'%3E${encodeURIComponent(cls)}%3C/text%3E%3C/svg%3E`;
+                                                    sampleItem.appendChild(img);
+                                                    const label = document.createElement('div');
+                                                    label.className = 'sample-label';
+                                                    label.textContent = cls;
+                                                    sampleItem.appendChild(label);
+                                                    sampleImages.appendChild(sampleItem);
+                                                });
+                                            }, 500);
+                                            prepareCoil20Btn.disabled = false;
+                                        } else if (s.status === 'error') {
+                                            clearInterval(interval);
+                                            clearInterval(poller);
+                                            progressMessage.textContent = `错误: ${s.message || '任务失败'}`;
+                                            progressMessage.classList.add('text-danger');
+                                            prepareCoil20Btn.disabled = false;
+                                        }
+                                    })
+                                    .catch(err => {
+                                        clearInterval(interval);
+                                        clearInterval(poller);
+                                        progressMessage.textContent = '查询任务状态时出错';
+                                        progressMessage.classList.add('text-danger');
+                                        prepareCoil20Btn.disabled = false;
+                                        console.error('查询状态出错:', err);
+                                    });
+                            }, 1000);
+                        } else {
+                            clearInterval(interval);
+                            progressMessage.textContent = `错误: ${data.message || '无法启动任务'}`;
+                            progressMessage.classList.add('text-danger');
+                            prepareCoil20Btn.disabled = false;
+                        }
+                    })
+                    .catch(error => {
+                        clearInterval(interval);
+                        progressMessage.textContent = '准备 COIL-20 数据集时出错';
+                        progressMessage.classList.add('text-danger');
+                        prepareCoil20Btn.disabled = false;
+                        console.error('准备 COIL-20 数据集时出错:', error);
+                    });
+            });
+            // 验证自定义数据集
+            const verifyCustomBtn = document.getElementById('verify-custom-btn');
+            verifyCustomBtn.addEventListener('click', function() {
+                alert('请确保您的数据集已按照要求的目录结构放置。在实际应用中，这里会有一个验证过程。');
+                // 这里可以添加验证自定义数据集的逻辑
+            });
+        });
+    </script>
+</body>
+</html>

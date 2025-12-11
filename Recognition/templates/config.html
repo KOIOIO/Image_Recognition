@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>模型配置 - 图像识别大课设</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background-color: #f8f9fa;
+        }
+        .section-title {
+            margin-bottom: 30px;
+            color: #343a40;
+            font-weight: 600;
+        }
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 25px;
+        }
+        .form-label {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 8px;
+            display: block;
+        }
+        .btn-primary {
+            background-color: #667eea;
+            border-color: #667eea;
+        }
+        .btn-primary:hover {
+            background-color: #5a67d8;
+            border-color: #5a67d8;
+        }
+        .model-option {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        .model-option:hover {
+            background-color: #f8f9fa;
+        }
+        .model-option.selected {
+            border-color: #667eea;
+            background-color: #e3f2fd;
+        }
+        .model-description {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-top: 10px;
+        }
+        .model-details {
+            margin-top: 15px;
+            font-size: 0.85rem;
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .param-help {
+            cursor: help;
+            margin-left: 5px;
+            color: #6c757d;
+        }
+        .form-range {
+            margin-bottom: 15px;
+        }
+        .range-value {
+            font-weight: 600;
+            color: #667eea;
+            min-width: 80px;
+            text-align: center;
+        }
+        .alert-info {
+            background-color: #e3f2fd;
+            border-color: #bbdefb;
+            color: #1565c0;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">图像识别大课设</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">首页</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/prepare_data">数据准备</a>
+                    </li>
+                    <li class="nav-item active">
+                        <a class="nav-link" href="/config">模型配置</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/train">模型训练</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/results">训练结果</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/predict">图像预测</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <h1 class="section-title">模型配置</h1>
+        
+        <div class="alert alert-info">
+            <strong>💡 提示：</strong> 合理的参数配置对于模型性能至关重要。初学者可以使用默认参数开始，然后逐步调整以获得更好的结果。
+        </div>
+        
+        <form action="/config" method="post">
+            <!-- 模型类型选择 -->
+            <div class="card">
+                <div class="card-body">
+                    <h3>选择模型类型</h3>
+                    <p>我们提供三种不同复杂度的卷积神经网络模型，请根据您的需求和硬件条件选择合适的模型。</p>
+                    
+                    <div class="row mt-4">
+                        <div class="col-md-4">
+                            <div class="p-4 rounded model-option selected" onclick="selectModel('simple')">
+                                <input type="radio" id="model-simple" name="model_type" value="simple" checked style="display: none;">
+                                <h4>📱 简单CNN</h4>
+                                <div class="model-description">
+                                    适合初学者和资源有限的环境
+                                </div>
+                                <div class="model-details">
+                                    <strong>结构：</strong> 2个卷积层 + 2个全连接层<br>
+                                    <strong>参数量：</strong> 约1280万<br>
+                                    <strong>训练速度：</strong> 快<br>
+                                    <strong>适合：</strong> 简单分类任务
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="p-4 rounded model-option" onclick="selectModel('improved')">
+                                <input type="radio" id="model-improved" name="model_type" value="improved" style="display: none;">
+                                <h4>📊 改进CNN</h4>
+                                <div class="model-description">
+                                    平衡性能和复杂度的选择
+                                </div>
+                                <div class="model-details">
+                                    <strong>结构：</strong> 4个卷积层 + 3个全连接层<br>
+                                    <strong>参数量：</strong> 约3240万<br>
+                                    <strong>训练速度：</strong> 中等<br>
+                                    <strong>适合：</strong> 大多数分类任务
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="p-4 rounded model-option" onclick="selectModel('advanced')">
+                                <input type="radio" id="model-advanced" name="model_type" value="advanced" style="display: none;">
+                                <h4>🚀 高级CNN</h4>
+                                <div class="model-description">
+                                    基于ResNet架构，性能更强
+                                </div>
+                                <div class="model-details">
+                                    <strong>结构：</strong> 残差块结构，更多卷积层<br>
+                                    <strong>参数量：</strong> 约1120万<br>
+                                    <strong>训练速度：</strong> 较慢<br>
+                                    <strong>适合：</strong> 复杂分类任务
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 数据增强设置（移动到表单内） -->
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h3>数据增强设置</h3>
+                    <div class="form-group">
+                        <label class="form-label">灰度增强（RandomGrayscale）</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="enable_random_grayscale" name="enable_random_grayscale" checked>
+                            <label class="form-check-label" for="enable_random_grayscale">启用灰度增强</label>
+                        </div>
+                        <label class="form-label mt-2">灰度增强概率 p</label>
+                        <div class="input-group">
+                            <input type="range" class="form-range" id="random_grayscale_p_range" min="0" max="1" step="0.05" value="0.2" oninput="updateRangeValue('random_grayscale_p', this.value)">
+                            <div class="range-value" id="random_grayscale_p_value">0.2</div>
+                        </div>
+                        <input type="hidden" id="random_grayscale_p" name="random_grayscale_p" value="0.2">
+                        <div class="model-description mt-2">将 RGB 图像以概率 p 转为灰度，提升在低彩色/弱光场景的鲁棒性。</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 训练参数设置 -->
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h3>训练参数设置</h3>
+                    
+                    <div class="form-group">
+                        <label for="batch_size" class="form-label">
+                            批次大小 (Batch Size)
+                            <span class="param-help" title="批次大小决定每次迭代中处理的样本数量。较大的批次可以利用GPU并行计算，但需要更多内存。">❓</span>
+                        </label>
+                        <div class="input-group">
+                            <input type="range" class="form-range" id="batch_size_range" min="16" max="128" step="16" value="32" oninput="updateRangeValue('batch_size', this.value)">
+                            <div class="range-value" id="batch_size_value">32</div>
+                        </div>
+                        <input type="hidden" id="batch_size" name="batch_size" value="32">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="learning_rate" class="form-label">
+                            学习率 (Learning Rate)
+                            <span class="param-help" title="学习率决定参数更新的步长。太小会导致训练缓慢，太大会导致不稳定。">❓</span>
+                        </label>
+                        <div class="input-group">
+                            <input type="range" class="form-range" id="learning_rate_range" min="0.0001" max="0.01" step="0.0001" value="0.001" oninput="updateRangeValue('learning_rate', this.value)">
+                            <div class="range-value" id="learning_rate_value">0.001</div>
+                        </div>
+                        <input type="hidden" id="learning_rate" name="learning_rate" value="0.001">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="epochs" class="form-label">
+                        训练轮数 (Epochs)
+                        <span class="param-help" title="训练轮数表示整个数据集被处理的次数。增加轮数可能提高性能，但也可能导致过拟合。">❓</span>
+                    </label>
+                    <div class="input-group">
+                        <input type="range" class="form-range" id="epochs_range" min="5" max="2000" step="5" value="30" oninput="updateRangeValue('epochs', this.value)">
+                        <div class="range-value" id="epochs_value">30</div>
+                    </div>
+                    <input type="hidden" id="epochs" name="epochs" value="30">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="optimizer" class="form-label">
+                            优化器 (Optimizer)
+                            <span class="param-help" title="优化器决定如何更新模型参数。不同的优化器有不同的特点和适用场景。">❓</span>
+                        </label>
+                        <select id="optimizer" name="optimizer" class="form-select">
+                            <option value="adam">Adam</option>
+                            <option value="sgd">SGD</option>
+                        </select>
+                        <div class="model-description mt-2">
+                            <strong>Adam：</strong> 自适应学习率优化器，收敛速度快，适合大多数任务<br>
+                            <strong>SGD：</strong> 随机梯度下降，配合动量可能在某些任务上表现更好
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 提交按钮 -->
+            <div class="card mt-4">
+                <div class="card-body text-center">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        保存配置并继续
+                    </button>
+                </div>
+            </div>
+        </form>
+        
+        <!-- 参数建议 -->
+        <div class="card mt-4">
+            <div class="card-body">
+                <h3>参数调优建议</h3>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h4>初学者配置</h4>
+                        <ul>
+                            <li>模型：简单CNN</li>
+                            <li>批次大小：32</li>
+                            <li>学习率：0.001</li>
+                            <li>训练轮数：10</li>
+                            <li>优化器：Adam</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h4>进阶配置</h4>
+                        <ul>
+                            <li>模型：改进或高级CNN</li>
+                            <li>批次大小：64（如果GPU内存允许）</li>
+                            <li>学习率：0.0005-0.001</li>
+                            <li>训练轮数：20-30</li>
+                            <li>优化器：根据任务调整</li>
+                        </ul>
+                    </div>
+                </div>
+                <p class="model-description mt-3">
+                    <strong>💡 提示：</strong> 参数调优是一个迭代过程。建议先使用默认参数训练模型，然后根据训练结果（如损失曲线、准确率等）逐步调整参数。
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <footer class="mt-10 py-5 bg-dark text-white">
+        <div class="container text-center">
+            <p>&copy; 2023 图像识别大课设 - 深度学习项目</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function selectModel(modelType) {
+            // 移除所有选中状态
+            document.querySelectorAll('.model-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            // 添加选中状态
+            document.querySelector(`input[value="${modelType}"]`).parentElement.classList.add('selected');
+            document.querySelector(`input[value="${modelType}"]`).checked = true;
+        }
+        
+        function updateRangeValue(inputId, value) {
+            // 更新显示值
+            document.getElementById(`${inputId}_value`).textContent = value;
+            // 更新隐藏输入值
+            document.getElementById(inputId).value = value;
+        }
+    </script>
+</body>
+</html>

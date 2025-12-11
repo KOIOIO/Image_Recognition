@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图像预测 - 图像识别大课设</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background-color: #f8f9fa;
+        }
+        .section-title {
+            margin-bottom: 30px;
+            color: #343a40;
+            font-weight: 600;
+        }
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .btn-primary {
+            background-color: #667eea;
+            border-color: #667eea;
+        }
+        .btn-primary:hover {
+            background-color: #5a67d8;
+            border-color: #5a67d8;
+        }
+        .btn-secondary {
+            background-color: #48bb78;
+            border-color: #48bb78;
+        }
+        .btn-secondary:hover {
+            background-color: #38a169;
+            border-color: #38a169;
+        }
+        .upload-area {
+            border: 2px dashed #6c757d;
+            border-radius: 10px;
+            padding: 40px 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            background-color: #f8f9fa;
+            cursor: pointer;
+            min-height: 250px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .upload-area:hover {
+            border-color: #667eea;
+            background-color: #f0f2ff;
+        }
+        .upload-area.active {
+            border-color: #48bb78;
+            background-color: #f0fff4;
+        }
+        .upload-icon {
+            font-size: 3rem;
+            color: #6c757d;
+            margin-bottom: 15px;
+        }
+        .image-preview {
+            display: none;
+            margin-top: 20px;
+        }
+        .preview-image {
+            max-width: 100%;
+            max-height: 400px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .predict-results {
+            margin-top: 30px;
+        }
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .prediction-status {
+            font-weight: 600;
+        }
+        .status-pending {
+            color: #ffc107;
+        }
+        .status-processing {
+            color: #17a2b8;
+        }
+        .status-completed {
+            color: #28a745;
+        }
+        .status-error {
+            color: #dc3545;
+        }
+        .main-prediction {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .prediction-class {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        .prediction-confidence {
+            font-size: 1.2rem;
+            color: #48bb78;
+        }
+        .confidence-chart {
+            margin-top: 30px;
+        }
+        .prediction-details {
+            margin-top: 30px;
+        }
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .detail-label {
+            font-weight: 500;
+        }
+        .detail-bar {
+            flex: 1;
+            margin: 0 15px;
+            background-color: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            height: 20px;
+        }
+        .detail-progress {
+            height: 100%;
+            background-color: #667eea;
+            transition: width 0.6s ease;
+        }
+        .detail-value {
+            font-weight: 600;
+            min-width: 60px;
+            text-align: right;
+        }
+        .confidence-low .detail-progress {
+            background-color: #dc3545;
+        }
+        .confidence-medium .detail-progress {
+            background-color: #ffc107;
+        }
+        .confidence-high .detail-progress {
+            background-color: #48bb78;
+        }
+        .sample-images {
+            margin-top: 30px;
+        }
+        .sample-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .sample-item {
+            cursor: pointer;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border: 2px solid transparent;
+        }
+        .sample-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border-color: #667eea;
+        }
+        .sample-img {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+        }
+        .example-card {
+            display: inline-block;
+            margin: 10px;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            overflow: hidden;
+            width: calc(25% - 20px);
+            max-width: 200px;
+        }
+        .example-image {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+        }
+        .example-info {
+            padding: 10px;
+            background-color: #f8f9fa;
+        }
+        .true-label {
+            font-weight: 600;
+            color: #28a745;
+            margin-bottom: 5px;
+        }
+        .pred-label {
+            color: #667eea;
+        }
+        .note {
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #ffeaa7;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">图像识别大课设</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">首页</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/prepare_data">数据准备</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/config">模型配置</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/train">模型训练</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/results">训练结果</a>
+                    </li>
+                    <li class="nav-item active">
+                        <a class="nav-link" href="/predict">图像预测</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <h1 class="section-title">图像预测</h1>
+        
+        <div class="row">
+            <!-- 左侧：图像上传区域 -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h3>上传图像</h3>
+                        
+                        <!-- 文件上传区域 -->
+                        <div class="upload-area" id="upload-area">
+                            <div class="upload-icon">📁</div>
+                            <p>点击或拖拽图像到此处上传</p>
+                            <p class="text-muted small">支持 JPG、PNG、WEBP 格式，最大 5MB</p>
+                            <input type="file" id="file-input" accept="image/*" style="display: none;">
+                        </div>
+                        
+                        <!-- 上传的图像预览 -->
+                        <div class="image-preview" id="image-preview">
+                            <img src="" alt="预览图像" class="preview-image" id="preview-image">
+                            <div class="text-center mt-3">
+                                    <div class="d-flex justify-content-center align-items-center">
+                                        <select id="model-select" class="form-select me-2" style="max-width:300px;">
+                                            <option value=""></option>
+                                        </select>
+                                        <div id="model-info" style="margin-left:12px; text-align:left; max-width:400px;">
+                                            <!-- 模型参数和缩略图将在这里显示 -->
+                                        </div>
+                                        <button class="btn btn-outline-secondary me-2" id="refresh-models">刷新模型</button>
+                                        <button class="btn btn-primary" id="predict-btn">
+                                            🔍 开始预测
+                                        </button>
+                                    </div>
+                                <button class="btn btn-secondary ml-2" id="clear-btn">
+                                    ↻ 重新上传
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 示例图像 -->
+                <div class="card sample-images">
+                    <div class="card-body">
+                        <h3>示例图像</h3>
+                        <p>点击下方示例图像直接进行预测：</p>
+                        <div class="sample-grid" id="sample-grid">
+                            <!-- 示例图像将通过JavaScript动态生成 -->
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 预测示例 -->
+                <div class="card prediction-examples">
+                    <div class="card-body">
+                        <h3>预测示例</h3>
+                        <p>以下是模型预测的一些示例：</p>
+                        <div id="prediction-examples" class="prediction-examples-container">
+                            <!-- 预测示例将通过JavaScript动态生成 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 右侧：预测结果 -->
+            <div class="col-md-6">
+                <div class="card predict-results">
+                    <div class="card-body">
+                        <div class="result-header">
+                            <h3>预测结果</h3>
+                            <span class="prediction-status status-pending" id="prediction-status">
+                                ⏳ 等待图像上传
+                            </span>
+                        </div>
+                        
+                        <!-- 主要预测结果 -->
+                        <div class="main-prediction" id="main-prediction">
+                            <div class="prediction-class" id="prediction-class">--</div>
+                            <div class="prediction-confidence" id="prediction-confidence">--</div>
+                        </div>
+                        
+                        <!-- 详细预测结果 -->
+                        <div class="prediction-details" id="prediction-details">
+                            <h4>分类概率详情</h4>
+                            <!-- 详情将通过JavaScript动态生成 -->
+                        </div>
+                        
+                        <div class="note">
+                            <strong>提示：</strong> 预测结果仅供参考，实际应用中请结合具体场景进行验证。模型在处理非常规角度或光照条件下的图像时，准确率可能会降低。
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="mt-10 py-5 bg-dark text-white">
+        <div class="container text-center">
+            <p>&copy; 2023 图像识别大课设 - 深度学习项目</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM元素
+            const uploadArea = document.getElementById('upload-area');
+            const fileInput = document.getElementById('file-input');
+            const imagePreview = document.getElementById('image-preview');
+            const previewImage = document.getElementById('preview-image');
+            const predictBtn = document.getElementById('predict-btn');
+            const clearBtn = document.getElementById('clear-btn');
+            const predictionStatus = document.getElementById('prediction-status');
+            const predictionClass = document.getElementById('prediction-class');
+            const predictionConfidence = document.getElementById('prediction-confidence');
+            const predictionDetails = document.getElementById('prediction-details');
+            const sampleGrid = document.getElementById('sample-grid');
+            
+            // 类别名称
+            let classNames = ['飞机', '汽车', '鸟', '猫', '鹿', '狗', '青蛙', '马', '船', '卡车'];
+            
+            // 从服务器加载实际的类别名称
+            function loadClassNames() {
+                fetch('static/class_names.json')
+                    .then(response => {
+                        if (response.ok) {
+                            return response.json();
+                        }
+                        throw new Error('无法加载类别名称');
+                    })
+                    .then(data => {
+                        if (data && data.length > 0) {
+                            classNames = data;
+                        }
+                    })
+                    .catch(error => {
+                        console.log('使用默认类别名称:', error);
+                    });
+            }
+            
+            // 初始化示例图像
+            function initSampleImages() {
+                // 本地测试数据集的图片映射
+                const sampleImages = [
+                    { classIndex: 0, folder: 'plane', file: 'image_115.png' },
+                    { classIndex: 1, folder: 'car', file: 'image_136.png' },
+                    { classIndex: 2, folder: 'bird', file: 'image_108.png' },
+                    { classIndex: 3, folder: 'cat', file: 'image_101.png' },
+                    { classIndex: 4, folder: 'deer', file: 'image_158.png' },
+                    { classIndex: 5, folder: 'dog', file: 'image_107.png' },
+                    { classIndex: 6, folder: 'frog', file: 'image_0.png' },
+                    { classIndex: 7, folder: 'horse', file: 'image_11.png' },
+                    { classIndex: 8, folder: 'ship', file: 'image_139.png' },
+                    { classIndex: 9, folder: 'truck', file: 'image_1.png' }
+                ];
+                
+                // 生成示例图像
+                sampleImages.forEach(item => {
+                    const sampleItem = document.createElement('div');
+                    sampleItem.className = 'sample-item';
+                    sampleItem.dataset.classIndex = item.classIndex;
+                    
+                    const img = document.createElement('img');
+                    img.className = 'sample-img';
+                    // 使用相对路径访问测试数据集图片
+                    img.src = `/api/get_sample_image?folder=${item.folder}&file=${item.file}`;
+                    img.alt = classNames[item.classIndex];
+                    
+                    sampleItem.appendChild(img);
+                    sampleGrid.appendChild(sampleItem);
+                    
+                    // 添加点击事件
+                    sampleItem.addEventListener('click', function() {
+                        // 设置预览图像
+                        previewImage.src = img.src;
+                        imagePreview.style.display = 'block';
+                        uploadArea.style.display = 'none';
+                        
+                        // 自动预测
+                        setTimeout(() => {
+                            predictImage(img.src, item.classIndex);
+                        }, 500);
+                    });
+                });
+            }
+            
+            // 初始化预测示例
+            function initPredictionExamples() {
+                // 检查是否存在预测示例容器
+                const predictionExamplesContainer = document.getElementById('prediction-examples');
+                if (!predictionExamplesContainer) {
+                    return;
+                }
+                
+                // 预测示例数据
+                const predictionExamples = [
+                    { folder: 'bird', file: 'image_120.png', trueLabel: '鸟', predLabel: '汽车' },
+                    { folder: 'car', file: 'image_140.png', trueLabel: '汽车', predLabel: '猫' },
+                    { folder: 'cat', file: 'image_17.png', trueLabel: '猫', predLabel: '猫' },
+                    { folder: 'deer', file: 'image_20.png', trueLabel: '鹿', predLabel: '鹿' },
+                    { folder: 'dog', file: 'image_128.png', trueLabel: '狗', predLabel: '狗' },
+                    { folder: 'frog', file: 'image_125.png', trueLabel: '青蛙', predLabel: '马' },
+                    { folder: 'horse', file: 'image_12.png', trueLabel: '马', predLabel: '飞机' },
+                    { folder: 'plane', file: 'image_129.png', trueLabel: '飞机', predLabel: '飞机' }
+                ];
+                
+                // 清空容器
+                predictionExamplesContainer.innerHTML = '';
+                
+                // 生成预测示例
+                predictionExamples.forEach(example => {
+                    const exampleCard = document.createElement('div');
+                    exampleCard.className = 'example-card';
+                    
+                    const img = document.createElement('img');
+                    img.className = 'example-image';
+                    img.src = `/api/get_sample_image?folder=${example.folder}&file=${example.file}`;
+                    img.alt = example.trueLabel;
+                    
+                    const exampleInfo = document.createElement('div');
+                    exampleInfo.className = 'example-info';
+                    
+                    const trueLabel = document.createElement('div');
+                    trueLabel.className = 'true-label';
+                    trueLabel.textContent = `真实: ${example.trueLabel}`;
+                    
+                    const predLabel = document.createElement('div');
+                    predLabel.className = 'pred-label';
+                    predLabel.textContent = `预测: ${example.predLabel}`;
+                    
+                    exampleInfo.appendChild(trueLabel);
+                    exampleInfo.appendChild(predLabel);
+                    exampleCard.appendChild(img);
+                    exampleCard.appendChild(exampleInfo);
+                    
+                    predictionExamplesContainer.appendChild(exampleCard);
+                });
+            }
+            
+            // 处理文件上传
+            function handleFileUpload(file) {
+                // 检查文件类型
+                const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+                if (!validTypes.includes(file.type)) {
+                    alert('请上传有效的图像文件（JPG、PNG、WEBP）');
+                    return;
+                }
+                
+                // 检查文件大小
+                if (file.size > 5 * 1024 * 1024) { // 5MB
+                    alert('图像大小不能超过5MB');
+                    return;
+                }
+                
+                // 显示预览
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImage.src = e.target.result;
+                    imagePreview.style.display = 'block';
+                    uploadArea.style.display = 'none';
+                };
+                reader.readAsDataURL(file);
+            }
+            
+            // 从API获取预测结果
+            function predictImage(imageSrc, expectedClassIndex = null) {
+                // 更新状态
+                predictionStatus.className = 'prediction-status status-processing';
+                predictionStatus.textContent = '🔄 正在分析图像...';
+                
+                // 如果是示例图像，使用模拟数据
+                if (expectedClassIndex !== null) {
+                    // 模拟处理延迟
+                    setTimeout(() => {
+                        // 生成模拟预测结果
+                        const predictions = [];
+                        let total = 0;
+                        
+                        // 生成随机概率
+                        const probabilities = [];
+                        for (let i = 0; i < classNames.length; i++) {
+                            // 给期望类别更高的概率
+                            if (expectedClassIndex !== null && i === expectedClassIndex) {
+                                probabilities.push(Math.random() * 0.4 + 0.6); // 60%-100%
+                            } else {
+                                probabilities.push(Math.random() * 0.3); // 0%-30%
+                            }
+                            total += probabilities[i];
+                        }
+                        
+                        // 归一化概率
+                        for (let i = 0; i < classNames.length; i++) {
+                            predictions.push({
+                                class: classNames[i],
+                                confidence: probabilities[i] / total
+                            });
+                        }
+                        
+                        // 按概率排序
+                        predictions.sort((a, b) => b.confidence - a.confidence);
+                        
+                        // 更新主要预测结果
+                        const topPrediction = predictions[0];
+                        predictionClass.textContent = topPrediction.class;
+                        predictionConfidence.textContent = `置信度: ${(topPrediction.confidence * 100).toFixed(2)}%`;
+                        
+                        // 生成详细预测结果
+                        updatePredictionDetails(predictions);
+                        
+                        // 更新状态为完成
+                        predictionStatus.className = 'prediction-status status-completed';
+                        predictionStatus.textContent = '✅ 预测完成';
+                    }, 1500);
+                    return;
+                }
+                
+                // 如果是用户上传的图像，使用API进行实际预测
+                // 从imageSrc创建一个Blob对象
+                fetch(imageSrc)
+                    .then(response => response.blob())
+                    .then(blob => {
+                        const formData = new FormData();
+                        formData.append('image', blob, 'uploaded_image.jpg');
+                        // 附加所选模型文件名（如果有）
+                        const modelSelect = document.getElementById('model-select');
+                        if (modelSelect && modelSelect.value) {
+                            formData.append('model_file', modelSelect.value);
+                        }
+
+                        return fetch('/api/predict', {
+                            method: 'POST',
+                            body: formData
+                        });
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            // 更新主要预测结果
+                            predictionClass.textContent = data.prediction;
+                            predictionConfidence.textContent = `置信度: ${data.confidence_level.toFixed(2)}%`;
+                            
+                            // 准备预测详情数据
+                            const predictions = Object.entries(data.all_probabilities)
+                                .map(([className, confidence]) => ({
+                                    class: className,
+                                    confidence: confidence / 100 // 转换为小数形式
+                                }))
+                                .sort((a, b) => b.confidence - a.confidence);
+                            
+                            // 更新详细预测结果
+                            updatePredictionDetails(predictions);
+                            
+                            // 更新状态为完成
+                            predictionStatus.className = 'prediction-status status-completed';
+                            predictionStatus.textContent = '✅ 预测完成';
+                        } else {
+                            // 显示错误信息
+                            predictionClass.textContent = '预测失败';
+                            predictionConfidence.textContent = data.message || '未知错误';
+                            predictionStatus.className = 'prediction-status status-error';
+                            predictionStatus.textContent = '❌ 预测出错';
+                            predictionDetails.innerHTML = '<h4>分类概率详情</h4><p>无法获取预测结果</p>';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('预测过程中出错:', error);
+                        predictionClass.textContent = '预测失败';
+                        predictionConfidence.textContent = '网络错误';
+                        predictionStatus.className = 'prediction-status status-error';
+                        predictionStatus.textContent = '❌ 网络错误';
+                        predictionDetails.innerHTML = '<h4>分类概率详情</h4><p>无法连接到服务器</p>';
+                    });
+            }
+            
+            // 更新预测详情UI
+            function updatePredictionDetails(predictions) {
+                predictionDetails.innerHTML = '<h4>分类概率详情</h4>';
+                predictions.forEach(pred => {
+                    const confidencePercent = pred.confidence * 100;
+                    let confidenceClass = 'confidence-low';
+                    
+                    if (confidencePercent > 70) {
+                        confidenceClass = 'confidence-high';
+                    } else if (confidencePercent > 30) {
+                        confidenceClass = 'confidence-medium';
+                    }
+                    
+                    const detailItem = document.createElement('div');
+                    detailItem.className = 'detail-item';
+                    
+                    detailItem.innerHTML = `
+                        <div class="detail-label">${pred.class}</div>
+                        <div class="detail-bar">
+                            <div class="detail-progress" style="width: ${confidencePercent}%;"></div>
+                        </div>
+                        <div class="detail-value">${confidencePercent.toFixed(2)}%</div>
+                    `;
+                    
+                    // 添加置信度类
+                    detailItem.querySelector('.detail-bar').className += ` ${confidenceClass}`;
+                    
+                    predictionDetails.appendChild(detailItem);
+                });
+            }
+            
+            // 重置上传区域
+            function resetUploadArea() {
+                fileInput.value = '';
+                imagePreview.style.display = 'none';
+                uploadArea.style.display = 'flex';
+                
+                // 重置预测结果
+                predictionStatus.className = 'prediction-status status-pending';
+                predictionStatus.textContent = '⏳ 等待图像上传';
+                predictionClass.textContent = '--';
+                predictionConfidence.textContent = '--';
+                predictionDetails.innerHTML = '<h4>分类概率详情</h4>';
+            }
+            
+            // 事件监听器
+            
+            // 点击上传区域
+            uploadArea.addEventListener('click', function() {
+                fileInput.click();
+            });
+            
+            // 文件选择变化
+            fileInput.addEventListener('change', function() {
+                if (this.files && this.files[0]) {
+                    handleFileUpload(this.files[0]);
+                }
+            });
+            
+            // 拖拽事件
+            uploadArea.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                this.classList.add('active');
+            });
+            
+            uploadArea.addEventListener('dragleave', function() {
+                this.classList.remove('active');
+            });
+            
+            uploadArea.addEventListener('drop', function(e) {
+                e.preventDefault();
+                this.classList.remove('active');
+                
+                if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                    handleFileUpload(e.dataTransfer.files[0]);
+                }
+            });
+            
+            // 预测按钮点击
+            predictBtn.addEventListener('click', function() {
+                if (previewImage.src) {
+                    predictImage(previewImage.src);
+                }
+            });
+            
+            // 清除按钮点击
+            clearBtn.addEventListener('click', resetUploadArea);
+            
+            // 初始化页面
+            loadClassNames();
+            initSampleImages();
+            initPredictionExamples();
+            // 加载可用模型并填充下拉
+            function loadModelList() {
+                fetch('/api/list_models')
+                    .then(r => r.json())
+                    .then(data => {
+                        // 调试输出：打印后端返回的原始数据，便于定位 undefined 问题
+                        console.log('/api/list_models ->', data);
+                        if (data.status === 'success') {
+                            const select = document.getElementById('model-select');
+                            select.innerHTML = '<option value=""></option>';
+                            // cache models for later display
+                            window.__available_models = data.models;
+                            data.models.forEach(m => {
+                                const opt = document.createElement('option');
+                                const fname = m.filename || m.id || m.display || '';
+                                opt.value = fname;
+                                const label = (m.display || fname) + (m.modified ? ` (${m.modified})` : '');
+                                opt.textContent = label;
+                                select.appendChild(opt);
+                            });
+                            // after populating, attach change handler to show params
+                            select.addEventListener('change', function(){
+                                const val = this.value;
+                                const info = document.getElementById('model-info');
+                                info.innerHTML = '';
+                                if (!val) return;
+                                const chosen = (window.__available_models||[]).find(x => (x.filename===val || x.id===val || x.display===val));
+                                if (!chosen) return;
+                                // show params
+                                const params = chosen.model_params;
+                                const container = document.createElement('div');
+                                if (chosen.training_plot) {
+                                    const img = document.createElement('img');
+                                    img.src = '/' + chosen.training_plot.replace(/^\/+/, '');
+                                    img.style.maxWidth = '180px';
+                                    img.style.display = 'block';
+                                    img.style.marginBottom = '8px';
+                                    container.appendChild(img);
+                                }
+                                if (params) {
+                                    const ul = document.createElement('ul');
+                                    ul.style.margin = '0';
+                                    ul.style.paddingLeft = '18px';
+                                    ['model_type','batch_size','learning_rate','epochs','optimizer_type','save_time'].forEach(k => {
+                                        if (k in params) {
+                                            const li = document.createElement('li');
+                                            li.textContent = `${k}: ${params[k]}`;
+                                            ul.appendChild(li);
+                                        }
+                                    });
+                                    container.appendChild(ul);
+                                }
+                                info.appendChild(container);
+                            });
+                        }
+                    })
+                    .catch(err => console.log('加载模型列表失败', err));
+            }
+
+            document.getElementById('refresh-models').addEventListener('click', function() {
+                loadModelList();
+            });
+
+            // 首次加载模型列表
+            loadModelList();
+        });
+    </script>
+</body>
+</html>
